@@ -3,9 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"math"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -41,14 +39,25 @@ func main() {
 		rightList = append(rightList, r)
 	}
 
-	slices.Sort(leftList)
-	slices.Sort(rightList)
+	occurances := make(map[int]int)
 
-	td := 0
-	for i := range len(leftList) {
-		diff := leftList[i] - rightList[i]
-		td += int(math.Abs(float64(diff)))
+	for _, v := range leftList {
+		if _, ok := occurances[v]; !ok {
+			occurances[v] = 0
+		}
 	}
 
-	fmt.Println(td)
+	for _, v := range rightList {
+		if c, ok := occurances[v]; ok {
+			occurances[v] = c + 1
+		}
+	}
+
+	var score int
+
+	for k, v := range occurances {
+		score += k * v
+	}
+
+	fmt.Println(score)
 }
