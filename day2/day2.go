@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 )
@@ -44,6 +43,18 @@ func main() {
 	for _, r := range reports {
 		if r.isSafe() {
 			c++
+		} else {
+			orig := make([]int, len(r.levels))
+			copy(orig, r.levels)
+			for i := range orig {
+				r.levels = make([]int, len(orig))
+				copy(r.levels, orig)
+				r.levels = append(r.levels[:i], r.levels[i+1:]...)
+				if r.isSafe() {
+					c++
+					break
+				}
+			}
 		}
 	}
 
@@ -52,20 +63,22 @@ func main() {
 
 func (r report) isSafe() bool {
 	i := 0
-	if r.levels[0] > r.levels[1] {
-		slices.Reverse(r.levels)
+
+	comparitor := lessThan
+	if r.levels[0] < r.levels[1] {
+		comparitor = greaterThan
 	}
 	p := r.levels[0]
 	for i < len(r.levels)-1 {
 		i++
 
-		c := max(r.levels[i], -r.levels[i])
+		c := r.levels[i]
 
-		if c < p {
+		if comparitor(p, c) {
 			return false
 		}
 
-		diff := c - p
+		diff := max(c, p) - min(c, p)
 		if diff > 3 || diff < 1 {
 			return false
 		}
@@ -74,4 +87,12 @@ func (r report) isSafe() bool {
 	}
 
 	return true
+}
+
+func lessThan(a, b int) bool {
+	return a < b
+}
+
+func greaterThan(a, b int) bool {
+	return a > b
 }
