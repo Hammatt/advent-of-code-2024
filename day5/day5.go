@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -16,41 +17,43 @@ func main() {
 	}
 
 	s := bufio.NewScanner(bytes.NewReader(b))
-	rules, updates := parseInput(s)
+	updates, comp := parseInput(s)
 
-	valid := make([]int, 0)
+	valid := 0
+	sorted := 0
 	for _, update := range updates {
-		if isUpdateValid(rules, update) {
+		if isUpdateValid(update, comp) {
 			v, _ := strconv.Atoi(update[len(update)/2])
-			valid = append(valid, v)
+			valid += v
+		} else {
+			slices.SortFunc(update, comp)
+			v, _ := strconv.Atoi(update[len(update)/2])
+			sorted += v
 		}
 	}
 
-	ans := 0
-	for _, v := range valid {
-		ans += v
-	}
-	fmt.Println(ans)
+	fmt.Println(valid)
+	fmt.Println(sorted)
 }
 
-func isUpdateValid(rules map[string][]string, u []string) bool {
-	encountered := make(map[string]bool)
-	for _, p := range u {
-		if r, ok := rules[p]; ok {
-			for _, constraint := range r {
-				if _, enc := encountered[constraint]; enc {
-					return false
-				}
-			}
+func isUpdateValid(u []string, comp func(a, b string) int) bool {
+	return slices.IsSortedFunc(u, comp)
+}
+
+func parseInput(s *bufio.Scanner) (updates [][]string, comp func(a, b string) int) {
+	rules := make(map[string][]string)
+
+	comp = func(a, b string) int {
+		if slices.Contains(rules[a], b) {
+			return -1
 		}
-		encountered[p] = true
+
+		if slices.Contains(rules[b], b) {
+			return 1
+		}
+
+		return 0
 	}
-
-	return true
-}
-
-func parseInput(s *bufio.Scanner) (rules map[string][]string, updates [][]string) {
-	rules = make(map[string][]string)
 
 	for s.Scan() {
 		line := s.Text()
